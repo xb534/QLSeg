@@ -14,6 +14,7 @@ from mmseg.models.decode_heads.decode_head import BaseDecodeHead
 from timm.models.layers import trunc_normal_
 import matplotlib.pyplot as plt
 from mmseg.models.losses import accuracy
+from .msdeformattn import MSDeformAttnTransformerEncoderOnly,PositionEmbeddingSine
 
 def trunc_normal_init(module: nn.Module,
                       mean: float = 0,
@@ -187,6 +188,27 @@ class ATMHead(BaseDecodeHead):
         self.class_embed = nn.Linear(dim, self.num_classes + 1)
         self.CE_loss = CE_loss
         delattr(self, 'conv_seg')
+        input_proj_list = []
+        # from low resolution to high resolution (res5 -> res2)
+        for i in range(self.use_stages):
+            input_proj_list.append(nn.Sequential(
+                nn.Conv2d(self.in_channels, self.in_channels, kernel_size=1),
+                nn.GroupNorm(32, self.in_channels),
+            ))
+        self.pd_input_proj = nn.ModuleList(input_proj_list)
+        for proj in self.pd_input_proj:
+            nn.init.xavier_uniform_(proj[0].weight, gain=1)
+            nn.init.constant_(proj[0].bias, 0)
+        self.transformer = MSDeformAttnTransformerEncoderOnly(
+            d_model=self.in_channels,
+            dropout=0.0,
+            nhead=8,
+            dim_feedforward=1024,
+            num_encoder_layers=0,
+            num_feature_levels=self.use_stages,
+        )
+        N_steps = self.in_channels // 2
+        self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
 
     def init_weights(self):
         for n, m in self.named_modules():
@@ -196,11 +218,31 @@ class ATMHead(BaseDecodeHead):
                 constant_init(m, val=1.0, bias=0.0)
 
     def forward(self, inputs):
+        srcs = []
+        pos = []
+        # Reverse feature maps into top-down order (from low to high resolution)
+        for idx, x in enumerate(inputs):
+            x = x.float()                   # deformable detr does not support half precision
+            srcs.append(self.pd_input_proj[idx](x))
+            pos.append(self.pe_layer(x))
+        y, spatial_shapes, level_start_index = self.transformer(srcs, pos)
+        bs = y.shape[0]
+        split_size_or_sections = [None] * self.use_stages
+        for i in range(self.use_stages):
+            if i < self.use_stages - 1:
+                split_size_or_sections[i] = level_start_index[i + 1] - level_start_index[i]
+            else:
+                split_size_or_sections[i] = y.shape[1] - level_start_index[i]
+        y = torch.split(y, split_size_or_sections, dim=1)
+
+        out = []
+        for i, z in enumerate(y):
+            out.append(z.transpose(1, 2).view(bs, -1, spatial_shapes[i][0], spatial_shapes[i][1]))
+
         x = []
-        for stage_ in inputs[:self.use_stages]:
+        for stage_ in out[:self.use_stages]:
             x.append(self.d4_to_d3(stage_) if stage_.dim() > 3 else stage_)
         x.reverse()
-        bs = x[0].size()[0]
 
         laterals = []
         attns = []
