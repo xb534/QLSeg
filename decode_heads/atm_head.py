@@ -191,6 +191,8 @@ class ATMHead(BaseDecodeHead):
         self.decoder = atm_decoders
 
         self.class_embed = nn.Linear(dim, self.num_classes + 1)
+        self.class_embed1 = nn.Linear(dim, self.num_classes + 1)
+        self.class_embed2 = nn.Linear(dim, self.num_classes + 1)
         self.CE_loss = CE_loss
         delattr(self, 'conv_seg')
         input_proj_list = []
@@ -253,7 +255,11 @@ class ATMHead(BaseDecodeHead):
         attns = []
         maps_size = []
         qs = []
+        qs1 = []
+        qs2 = []
         qs_ = []
+        aux_loss_sim = []
+        aux_loss_label = []
         for idx, (x_, proj_, norm_, q_) in enumerate(zip(x, self.input_proj, self.proj_norm, self.qs)):
             q_ = q_.weight.repeat(bs, 1, 1).transpose(0, 1)
             lateral = norm_(proj_(x_))
@@ -275,11 +281,20 @@ class ATMHead(BaseDecodeHead):
                 attns_.append(attn)
                 if idx == 0:
                     qs.append(q.transpose(0, 1))
+                elif idx == 1:
+                    qs1.append(q.transpose(0, 1))
+                elif idx == 2:
+                    qs2.append(q.transpose(0, 1))
+            aux_loss_sim.append(qs_)
             attn = sum(attns_)
             maps_size.append(attn.size()[-2:])
             attns.append(attn)
         qs = torch.stack(qs, dim=0)
+        qs1 = torch.stack(qs1, dim=0)
+        qs2 = torch.stack(qs2, dim=0)
         outputs_class = self.class_embed(qs)
+        aux_loss_label.extend(self.class_embed1(qs1))
+        aux_loss_label.extend(self.class_embed2(qs2))
         out = {"pred_logits": outputs_class[0]}
 
         outputs_seg_masks = []
@@ -302,9 +317,11 @@ class ATMHead(BaseDecodeHead):
         if self.training:
             # [l, bs, queries, embed]
             outputs_seg_masks = torch.stack(outputs_seg_masks, dim=0)
-            out["aux_outputs"] = self._set_aux_loss(
-                outputs_class, outputs_seg_masks
-            )
+            out["aux"] = {
+                "aux_outputs":self._set_aux_loss(outputs_class, outputs_seg_masks),
+                "aux_label":[{"pred_logits": a} for a in aux_loss_label],
+                "aux_sim": aux_loss_sim
+            }
         else:
             return out["pred"]
 

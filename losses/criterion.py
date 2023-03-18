@@ -141,6 +141,19 @@ class SetCriterion(nn.Module):
         }
         return losses
 
+    def loss_cossim(self, outputs):
+        in1,in2,in3 = outputs
+        l1 = self.non_similaity_loss(in1,in2)
+        l2 = self.non_similaity_loss(in1,in3)
+        l3 = self.non_similaity_loss(in2,in3)
+        l = l1+l2+l3
+        return l
+    def non_similaity_loss(self, input1, input2):
+        cos = nn.CosineSimilarity(dim=2,eps=1e-6)
+        sim = cos(input1,input2)
+        loss = sim.mean()+1
+        return loss
+
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
         batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
@@ -190,12 +203,22 @@ class SetCriterion(nn.Module):
             losses.update(self.get_loss(loss, outputs, targets, indices, num_masks))
 
         # In case of auxiliary losses, we repeat this process with the output of each intermediate layer.
-        if "aux_outputs" in outputs:
-            for i, aux_outputs in enumerate(outputs["aux_outputs"]):
+        if "aux" in outputs:
+            for i, aux_outputs in enumerate(outputs["aux"]["aux_outputs"]):
                 # use the indices as the last stage
                 for loss in self.losses:
                     l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_masks)
                     l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
                     losses.update(l_dict)
+            for i, aux_label in enumerate(outputs["aux"]["aux_label"]):
+                # use the indices as the last stage
+                l_dict = self.loss_labels(aux_label, targets, indices, num_masks)
+                l_dict = {"loss_aux_label" + f"_{i}": v for k, v in l_dict.items()}
+                losses.update(l_dict)
+            for i, aux_sim in enumerate(outputs["aux"]["aux_sim"]):
+                # use the indices as the last stage
+                l_dict = {"loss_aux_sim" : self.loss_cossim(aux_sim)}
+                l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
+                losses.update(l_dict)
 
         return losses

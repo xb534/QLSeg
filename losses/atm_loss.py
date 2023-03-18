@@ -24,6 +24,10 @@ class ATMLoss(nn.Module):
         aux_weight_dict = {}
         for i in range(dec_layers - 1):
             aux_weight_dict.update({k + f"_{i}": v for k, v in weight_dict.items()})
+        for i in range(dec_layers*2):
+            aux_weight_dict.update({"loss_aux_label" + f"_{i}": 1.0})
+        for i in range(dec_layers):
+            aux_weight_dict.update({"loss_aux_sim" + f"_{i}": 1.0})
         weight_dict.update(aux_weight_dict)
         if use_point:
             self.criterion = SetCriterion_point(
