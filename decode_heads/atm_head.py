@@ -144,6 +144,7 @@ class ATMHead(BaseDecodeHead):
             use_proj=True,
             CE_loss=False,
             crop_train=False,
+            num_atm_layers=3,
             shrink_ratio=None,
             **kwargs,
     ):
@@ -158,6 +159,7 @@ class ATMHead(BaseDecodeHead):
         input_proj = []
         proj_norm = []
         atm_decoders = []
+        self.qs = []
         for i in range(self.use_stages):
             # FC layer to change ch
             if use_proj:
@@ -174,16 +176,19 @@ class ATMHead(BaseDecodeHead):
                 norm = nn.Identity()
             self.add_module("proj_norm_{}".format(i + 1), norm)
             proj_norm.append(norm)
-            # decoder layer
-            decoder_layer = TPN_DecoderLayer(d_model=dim, nhead=nhead, dim_feedforward=dim * 4)
-            decoder = TPN_Decoder(decoder_layer, num_layers)
-            self.add_module("decoder_{}".format(i + 1), decoder)
+            self.qs.append(nn.Embedding(self.num_classes, dim).cuda())
+        for i in range(num_atm_layers):
+            decoder = []
+            for j in range(self.use_stages):
+                decoder_layer = TPN_DecoderLayer(d_model=dim, nhead=nhead, dim_feedforward=dim * 4)
+                decoder_ = TPN_Decoder(decoder_layer, num_layers)
+                self.add_module("atm_{}_decoder_{}".format(i,j + 1), decoder_)
+                decoder.append(decoder_)
             atm_decoders.append(decoder)
 
         self.input_proj = input_proj
         self.proj_norm = proj_norm
         self.decoder = atm_decoders
-        self.q = nn.Embedding(self.num_classes, dim)
 
         self.class_embed = nn.Linear(dim, self.num_classes + 1)
         self.CE_loss = CE_loss
@@ -248,48 +253,45 @@ class ATMHead(BaseDecodeHead):
         attns = []
         maps_size = []
         qs = []
-        q = self.q.weight.repeat(bs, 1, 1).transpose(0, 1)
-
-        for idx, (x_, proj_, norm_, decoder_) in enumerate(zip(x, self.input_proj, self.proj_norm, self.decoder)):
+        qs_ = []
+        for idx, (x_, proj_, norm_, q_) in enumerate(zip(x, self.input_proj, self.proj_norm, self.qs)):
+            q_ = q_.weight.repeat(bs, 1, 1).transpose(0, 1)
             lateral = norm_(proj_(x_))
-            # if idx == 0:
-            if True:
-                laterals.append(lateral)
-            else:
-                if laterals[idx - 1].size()[1] == lateral.size()[1]:
-                    laterals.append(lateral + laterals[idx - 1])
-                else:
-                    # nearest interpolate
-                    l_ = self.d3_to_d4(laterals[idx - 1])
-                    l_ = F.interpolate(l_, scale_factor=2, mode="nearest")
-                    l_ = self.d4_to_d3(l_)
-                    laterals.append(l_ + lateral)
-
-            q, attn = decoder_(q, lateral.transpose(0, 1))
-            attn = attn.transpose(-1, -2)
-            if self.crop_train and self.training:
-                blank_attn = torch.zeros_like(attn)
-                blank_attn = blank_attn[:, 0].unsqueeze(1).repeat(1, (self.image_size//16)**2, 1)
-                blank_attn[:, inputs[-1]] = attn
-                attn = blank_attn
-                self.crop_idx = inputs[-1]
-            attn = self.d3_to_d4(attn)
+            laterals.append(lateral)
+            qs_.append(q_)
+        for decoders in self.decoder:
+            attns_ = []
+            for idx,(decoder_,lateral_, q) in enumerate(zip(decoders, laterals, qs_)):
+                q, attn = decoder_(q, lateral_.transpose(0, 1))
+                qs_[idx] = q
+                attn = attn.transpose(-1, -2)
+                if self.crop_train and self.training:
+                    blank_attn = torch.zeros_like(attn)
+                    blank_attn = blank_attn[:, 0].unsqueeze(1).repeat(1, (self.image_size//16)**2, 1)
+                    blank_attn[:, inputs[-1]] = attn
+                    attn = blank_attn
+                    self.crop_idx = inputs[-1]
+                attn = self.d3_to_d4(attn)
+                attns_.append(attn)
+                if idx == 0:
+                    qs.append(q.transpose(0, 1))
+            attn = sum(attns_)
             maps_size.append(attn.size()[-2:])
-            qs.append(q.transpose(0, 1))
             attns.append(attn)
         qs = torch.stack(qs, dim=0)
         outputs_class = self.class_embed(qs)
-        out = {"pred_logits": outputs_class[-1]}
+        out = {"pred_logits": outputs_class[0]}
 
         outputs_seg_masks = []
         size = maps_size[-1]
 
         for i_attn, attn in enumerate(attns):
-            if i_attn == 0:
-                outputs_seg_masks.append(F.interpolate(attn, size=size, mode='bilinear', align_corners=False))
-            else:
-                outputs_seg_masks.append(outputs_seg_masks[i_attn - 1] +
-                                         F.interpolate(attn, size=size, mode='bilinear', align_corners=False))
+            outputs_seg_masks.append(F.interpolate(attn, size=size, mode='bilinear', align_corners=False))
+            # if i_attn == 0:
+            #     outputs_seg_masks.append(F.interpolate(attn, size=size, mode='bilinear', align_corners=False))
+            # else:
+            #     outputs_seg_masks.append(outputs_seg_masks[i_attn - 1] +
+            #                              F.interpolate(attn, size=size, mode='bilinear', align_corners=False))
 
         out["pred_masks"] = F.interpolate(outputs_seg_masks[-1],
                                           size=(self.image_size, self.image_size),
