@@ -215,10 +215,10 @@ class SetCriterion(nn.Module):
                 l_dict = self.loss_labels(aux_label, targets, indices, num_masks)
                 l_dict = {"loss_aux_label" + f"_{i}": v for k, v in l_dict.items()}
                 losses.update(l_dict)
-            for i, aux_sim in enumerate(outputs["aux"]["aux_sim"]):
-                # use the indices as the last stage
-                l_dict = {"loss_aux_sim" : self.loss_cossim(aux_sim)}
-                l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
-                losses.update(l_dict)
+            # for i, aux_sim in enumerate(outputs["aux"]["aux_sim"]):
+            #     # use the indices as the last stage
+            #     l_dict = {"loss_aux_sim" : self.loss_cossim(aux_sim)}
+            #     l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
+            #     losses.update(l_dict)
 
         return losses
