@@ -130,6 +130,29 @@ class MLP(nn.Module):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
 
+class QFM(nn.Module):
+    def __init__(self, query_dim, stages, bias=True):
+        super().__init__()
+        self.lns = []
+        self.stages = stages
+        compress_c = 10
+        for i in range(stages):
+            self.lns.append(nn.Sequential(nn.Linear(query_dim, compress_c, bias=bias),
+                                          nn.LeakyReLU(0.1)).cuda())
+        self.weights = nn.Linear(compress_c*stages,stages,bias=bias)
+    def forward(self, qs):
+        qs_ = []
+        for i,q in enumerate(qs):
+            qs_.append(self.lns[i](q))
+        q = torch.cat(qs_, dim=-1)
+        weights_q = self.weights(q)
+        weights_q = F.softmax(weights_q, dim=-1)
+        out_q = torch.zeros_like(qs[0])
+        for i in range(self.stages):
+            out_q += weights_q[:,:,i:i+1]*qs[i]
+        out_q = out_q.permute(1,2,0)
+        return out_q
+
 
 @HEADS.register_module()
 class ATMHead(BaseDecodeHead):
@@ -159,6 +182,7 @@ class ATMHead(BaseDecodeHead):
         input_proj = []
         proj_norm = []
         atm_decoders = []
+        query_fusions = []
         self.qs = []
         for i in range(self.use_stages):
             # FC layer to change ch
@@ -185,14 +209,19 @@ class ATMHead(BaseDecodeHead):
                 self.add_module("atm_{}_decoder_{}".format(i,j + 1), decoder_)
                 decoder.append(decoder_)
             atm_decoders.append(decoder)
+        for i in range(self.use_stages):
+            query_fusion = QFM(self.num_classes, self.use_stages)
+            self.add_module("QFM_{}".format(i + 1), query_fusion)
+            query_fusions.append(query_fusion)
 
         self.input_proj = input_proj
         self.proj_norm = proj_norm
         self.decoder = atm_decoders
+        self.query_fusions = query_fusions
 
         self.class_embed = nn.Linear(dim, self.num_classes + 1)
-        self.class_embed1 = nn.Linear(dim, self.num_classes + 1)
-        self.class_embed2 = nn.Linear(dim, self.num_classes + 1)
+        # self.class_embed1 = nn.Linear(dim, self.num_classes + 1)
+        # self.class_embed2 = nn.Linear(dim, self.num_classes + 1)
         self.CE_loss = CE_loss
         delattr(self, 'conv_seg')
         input_proj_list = []
@@ -255,18 +284,19 @@ class ATMHead(BaseDecodeHead):
         attns = []
         maps_size = []
         qs = []
-        qs1 = []
-        qs2 = []
+        # qs1 = []
+        # qs2 = []
         qs_ = []
-        aux_loss_sim = []
-        aux_loss_label = []
+        # aux_loss_sim = []
+        # aux_loss_label = []
         for idx, (x_, proj_, norm_, q_) in enumerate(zip(x, self.input_proj, self.proj_norm, self.qs)):
             q_ = q_.weight.repeat(bs, 1, 1).transpose(0, 1)
             lateral = norm_(proj_(x_))
             laterals.append(lateral)
             qs_.append(q_)
-        for decoders in self.decoder:
+        for decoders, qfm in zip(self.decoder, self.query_fusions):
             attns_ = []
+            multi_qs_ = []
             for idx,(decoder_,lateral_, q) in enumerate(zip(decoders, laterals, qs_)):
                 q, attn = decoder_(q, lateral_.transpose(0, 1))
                 qs_[idx] = q
@@ -279,22 +309,18 @@ class ATMHead(BaseDecodeHead):
                     self.crop_idx = inputs[-1]
                 attn = self.d3_to_d4(attn)
                 attns_.append(attn)
-                if idx == 0:
-                    qs.append(q.transpose(0, 1))
-                elif idx == 1:
-                    qs1.append(q.transpose(0, 1))
-                elif idx == 2:
-                    qs2.append(q.transpose(0, 1))
-            aux_loss_sim.append(qs_)
+                multi_qs_.append(q.transpose(0, 2))
+            qs.append(qfm(multi_qs_))
+            # aux_loss_sim.append(qs_)
             attn = sum(attns_)
             maps_size.append(attn.size()[-2:])
             attns.append(attn)
         qs = torch.stack(qs, dim=0)
-        qs1 = torch.stack(qs1, dim=0)
-        qs2 = torch.stack(qs2, dim=0)
+        # qs1 = torch.stack(qs1, dim=0)
+        # qs2 = torch.stack(qs2, dim=0)
         outputs_class = self.class_embed(qs)
-        aux_loss_label.extend(self.class_embed1(qs1))
-        aux_loss_label.extend(self.class_embed2(qs2))
+        # aux_loss_label.extend(self.class_embed1(qs1))
+        # aux_loss_label.extend(self.class_embed2(qs2))
         out = {"pred_logits": outputs_class[0]}
 
         outputs_seg_masks = []
@@ -319,8 +345,8 @@ class ATMHead(BaseDecodeHead):
             outputs_seg_masks = torch.stack(outputs_seg_masks, dim=0)
             out["aux"] = {
                 "aux_outputs":self._set_aux_loss(outputs_class, outputs_seg_masks),
-                "aux_label":[{"pred_logits": a} for a in aux_loss_label],
-                "aux_sim": aux_loss_sim
+                "aux_label": {},
+                "aux_sim": {}
             }
         else:
             return out["pred"]
