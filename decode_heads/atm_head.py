@@ -200,7 +200,9 @@ class ATMHead(BaseDecodeHead):
                 norm = nn.Identity()
             self.add_module("proj_norm_{}".format(i + 1), norm)
             proj_norm.append(norm)
-            self.qs.append(nn.Embedding(self.num_classes, dim).cuda())
+            q = nn.Embedding(self.num_classes, dim)
+            self.add_module("query_{}".format(i + 1), q)
+            self.qs.append(q)
         for i in range(num_atm_layers):
             decoder = []
             for j in range(self.use_stages):
