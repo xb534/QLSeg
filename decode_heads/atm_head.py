@@ -323,7 +323,7 @@ class ATMHead(BaseDecodeHead):
         outputs_class = self.class_embed(qs)
         # aux_loss_label.extend(self.class_embed1(qs1))
         # aux_loss_label.extend(self.class_embed2(qs2))
-        out = {"pred_logits": outputs_class[0]}
+        out = {"pred_logits": outputs_class[-1]}
 
         outputs_seg_masks = []
         size = maps_size[-1]
