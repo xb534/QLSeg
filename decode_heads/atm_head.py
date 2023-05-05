@@ -211,7 +211,7 @@ class ATMHead(BaseDecodeHead):
                 self.add_module("atm_{}_decoder_{}".format(i,j + 1), decoder_)
                 decoder.append(decoder_)
             atm_decoders.append(decoder)
-        for i in range(self.use_stages):
+        for i in range(num_atm_layers):
             query_fusion = QFM(self.num_classes, self.use_stages)
             self.add_module("QFM_{}".format(i + 1), query_fusion)
             query_fusions.append(query_fusion)

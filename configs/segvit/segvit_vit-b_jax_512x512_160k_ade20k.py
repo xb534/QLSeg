@@ -5,12 +5,19 @@ _base_ = [
 ]
 checkpoint = './pretrained/vit_base_p16_jx.pth'
 out_indices = [5, 7, 11]
+num_atm_layers=3
 device = 'cuda'
 model = dict(
     pretrained=checkpoint,
+    backbone=dict(
+        out_indices=out_indices,
+    ),
     decode_head=dict(
+        use_stages=len(out_indices),
+        num_atm_layers=num_atm_layers,
+        attn_mask_thre=0.3,
         loss_decode=dict(
-            type='ATMLoss', num_classes=150, dec_layers=len(out_indices), loss_weight=1.0),
+            type='ATMLoss', num_classes=150, dec_layers=num_atm_layers, loss_weight=1.0),
     )
 )
 data = dict(samples_per_gpu=2,)
