@@ -140,6 +140,7 @@ class QFM(nn.Module):
             self.lns.append(nn.Sequential(nn.Linear(query_dim, compress_c, bias=bias),
                                           nn.LeakyReLU(0.1)).cuda())
         self.weights = nn.Linear(compress_c*stages,stages,bias=bias)
+        self.lns = nn.ModuleList(self.lns)
     def forward(self, qs):
         qs_ = []
         for i,q in enumerate(qs):
