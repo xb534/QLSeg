@@ -131,11 +131,11 @@ class MLP(nn.Module):
         return x
 
 class QFM(nn.Module):
-    def __init__(self, query_dim, stages, bias=True):
+    def __init__(self, query_dim, stages, compress_c=10, bias=True):
         super().__init__()
         self.lns = []
         self.stages = stages
-        compress_c = 10
+        compress_c = compress_c
         for i in range(stages):
             self.lns.append(nn.Sequential(nn.Linear(query_dim, compress_c, bias=bias),
                                           nn.LeakyReLU(0.1)).cuda())
@@ -169,6 +169,7 @@ class ATMHead(BaseDecodeHead):
             CE_loss=False,
             crop_train=False,
             num_atm_layers=3,
+            compress_c=10,
             shrink_ratio=None,
             **kwargs,
     ):
@@ -213,7 +214,7 @@ class ATMHead(BaseDecodeHead):
                 decoder.append(decoder_)
             atm_decoders.append(decoder)
         for i in range(num_atm_layers):
-            query_fusion = QFM(self.num_classes, self.use_stages)
+            query_fusion = QFM(self.num_classes, self.use_stages, compress_c)
             self.add_module("QFM_{}".format(i + 1), query_fusion)
             query_fusions.append(query_fusion)
 
