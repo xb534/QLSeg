@@ -96,7 +96,7 @@ class MSDeformAttnTransformerEncoderLayer(nn.Module):
 
         # self attention
         # self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
-        self.self_attn = MSDeformAttn(d_model, n_heads, n_levels,n_points)
+        self.self_attn = MSDeformAttn(d_model, n_heads, n_levels, n_points,im2col_step=128)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
