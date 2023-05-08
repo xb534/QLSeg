@@ -1,11 +1,11 @@
 import math
 from torch.nn.init import normal_
-from .ops.modules import MSDeformAttn
+# from .ops.modules import MSDeformAttn
 import copy
 import torch
 import torch.nn.functional as F
 from torch import nn
-
+from mmcv.ops import MultiScaleDeformableAttention as MSDeformAttn
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
 
@@ -95,7 +95,8 @@ class MSDeformAttnTransformerEncoderLayer(nn.Module):
         super().__init__()
 
         # self attention
-        self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
+        # self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
+        self.self_attn = MSDeformAttn(d_model, n_heads, n_levels,n_points)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
