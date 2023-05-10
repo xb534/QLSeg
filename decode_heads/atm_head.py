@@ -149,7 +149,7 @@ class QFM(nn.Module):
             q_ = torch.empty(c,b,self.compress_c).cuda()
             q_chunk = torch.chunk(q, self.compress_c, dim=-1)
             for i, chunk in enumerate(q_chunk):
-                q_[:,:,i] = chunk.mean(dim=-1)
+                q_[:,:,i],_ = chunk.max(dim=-1)
             qs_.append(q_)
         q = torch.cat(qs_, dim=-1)
         weights_q = self.weights(q)
