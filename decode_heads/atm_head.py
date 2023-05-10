@@ -135,16 +135,22 @@ class QFM(nn.Module):
         super().__init__()
         self.lns = []
         self.stages = stages
-        compress_c = compress_c
-        for i in range(stages):
-            self.lns.append(nn.Sequential(nn.Linear(query_dim, compress_c, bias=bias),
-                                          nn.LeakyReLU(0.1)).cuda())
+        self.compress_c = compress_c
+        # for i in range(stages):
+        #     self.lns.append(nn.Sequential(nn.Linear(query_dim, compress_c, bias=bias),
+        #                                   nn.LeakyReLU(0.1)).cuda())
         self.weights = nn.Linear(compress_c*stages,stages,bias=bias)
-        self.lns = nn.ModuleList(self.lns)
+        # self.lns = nn.ModuleList(self.lns)
     def forward(self, qs):
         qs_ = []
-        for i,q in enumerate(qs):
-            qs_.append(self.lns[i](q))
+        for q in qs:
+            # qs_.append(self.lns[i](q))
+            c,b,nq = q.size()
+            q_ = torch.empty(c,b,self.compress_c).cuda()
+            q_chunk = torch.chunk(q, self.compress_c, dim=-1)
+            for i, chunk in enumerate(q_chunk):
+                q_[:,:,i] = chunk.mean(dim=-1)
+            qs_.append(q_)
         q = torch.cat(qs_, dim=-1)
         weights_q = self.weights(q)
         weights_q = F.softmax(weights_q, dim=-1)
