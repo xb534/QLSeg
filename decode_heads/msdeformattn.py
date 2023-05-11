@@ -37,15 +37,15 @@ class MSDeformAttnTransformerEncoderOnly(nn.Module):
 
         self.level_embed = nn.Parameter(torch.Tensor(num_feature_levels, d_model))
 
-        self._reset_parameters()
+        self.init_weights()
 
-    def _reset_parameters(self):
+    def init_weights(self):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
         for m in self.modules():
             if isinstance(m, MSDeformAttn):
-                m._reset_parameters()
+                m.init_weights()
         normal_(self.level_embed)
 
     def get_valid_ratio(self, mask):
@@ -96,7 +96,7 @@ class MSDeformAttnTransformerEncoderLayer(nn.Module):
 
         # self attention
         # self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
-        self.self_attn = MSDeformAttn(d_model, n_heads, n_levels, n_points,im2col_step=128)
+        self.self_attn = MSDeformAttn(d_model, n_heads, n_levels, n_points,im2col_step=128,dropout=dropout)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
@@ -120,8 +120,26 @@ class MSDeformAttnTransformerEncoderLayer(nn.Module):
 
     def forward(self, src, pos, reference_points, spatial_shapes, level_start_index, padding_mask=None):
         # self attention
-        src2 = self.self_attn(self.with_pos_embed(src, pos), reference_points, src, spatial_shapes, level_start_index, padding_mask)
+        src = src.transpose(0, 1)
+        pos = pos.transpose(0, 1)
+        src2 = self.self_attn(src, src, src, None, pos, padding_mask, reference_points, spatial_shapes, level_start_index)
+        # output = layer(output, output, output, query_pos=pos, reference_points=reference_points,
+        #                spatial_shapes=spatial_shapes, level_start_index=level_start_index,
+        #                key_padding_mask=padding_mask)
+
+        # def forward(self,
+        #             query: torch.Tensor,
+        #             key: Optional[torch.Tensor] = None,
+        #             value: Optional[torch.Tensor] = None,
+        #             identity: Optional[torch.Tensor] = None,
+        #             query_pos: Optional[torch.Tensor] = None,
+        #             key_padding_mask: Optional[torch.Tensor] = None,
+        #             reference_points: Optional[torch.Tensor] = None,
+        #             spatial_shapes: Optional[torch.Tensor] = None,
+        #             level_start_index: Optional[torch.Tensor] = None,
+        #             **kwargs) -> torch.Tensor:
         src = src + self.dropout1(src2)
+        src = src.transpose(0, 1)
         src = self.norm1(src)
 
         # ffn

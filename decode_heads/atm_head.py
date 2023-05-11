@@ -175,6 +175,7 @@ class ATMHead(BaseDecodeHead):
             CE_loss=False,
             crop_train=False,
             num_atm_layers=3,
+            num_ps_layers=1,
             compress_c=10,
             shrink_ratio=None,
             **kwargs,
@@ -250,7 +251,7 @@ class ATMHead(BaseDecodeHead):
             dropout=0.0,
             nhead=8,
             dim_feedforward=1024,
-            num_encoder_layers=0,
+            num_encoder_layers=num_ps_layers,
             num_feature_levels=self.use_stages,
         )
         N_steps = self.in_channels // 2
