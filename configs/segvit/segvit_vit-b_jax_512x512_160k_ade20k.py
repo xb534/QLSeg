@@ -15,6 +15,7 @@ model = dict(
     decode_head=dict(
         use_stages=len(out_indices),
         num_atm_layers=num_atm_layers,
+        attn_mask_thre=0.3,
         num_ps_layers=6,
         compress_c=10,
         loss_decode=dict(

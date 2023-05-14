@@ -67,7 +67,7 @@ class TPN_DecoderLayer(TransformerDecoderLayer):
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
         tgt2, attn2 = self.multihead_attn(
-            tgt.transpose(0, 1), memory.transpose(0, 1), memory.transpose(0, 1))
+            tgt.transpose(0, 1), memory.transpose(0, 1), memory.transpose(0, 1), attn_mask=memory_mask)
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
@@ -91,7 +91,7 @@ class Attention(nn.Module):
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, xq, xk, xv):
+    def forward(self, xq, xk, xv, attn_mask):
         B, Nq, C = xq.size()
         Nk = xk.size()[1]
         Nv = xv.size()[1]
@@ -105,6 +105,12 @@ class Attention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn_save = attn.clone()
+        if attn_mask is not None:
+            if attn_mask.dtype == torch.bool:
+                new_attn_mask = torch.zeros_like(attn_mask, dtype=torch.float)
+                new_attn_mask.masked_fill_(attn_mask, float("-inf"))
+                attn_mask = new_attn_mask
+            attn += attn_mask
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
@@ -175,6 +181,7 @@ class ATMHead(BaseDecodeHead):
             CE_loss=False,
             crop_train=False,
             num_atm_layers=3,
+            attn_mask_thre=0.3,
             num_ps_layers=1,
             compress_c=10,
             shrink_ratio=None,
@@ -186,6 +193,9 @@ class ATMHead(BaseDecodeHead):
         self.image_size = img_size
         self.use_stages = use_stages
         self.crop_train = crop_train
+        self.nhead = num_heads
+        self.attn_mask_thre = attn_mask_thre
+
         nhead = num_heads
         dim = embed_dims
         input_proj = []
@@ -305,11 +315,12 @@ class ATMHead(BaseDecodeHead):
             lateral = norm_(proj_(x_))
             laterals.append(lateral)
             qs_.append(q_)
+        attn_mask = None
         for decoders, qfm in zip(self.decoder, self.query_fusions):
             attns_ = []
             multi_qs_ = []
             for idx,(decoder_,lateral_, q) in enumerate(zip(decoders, laterals, qs_)):
-                q, attn = decoder_(q, lateral_.transpose(0, 1))
+                q, attn = decoder_(q, lateral_.transpose(0, 1),memory_mask=attn_mask)
                 qs_[idx] = q
                 attn = attn.transpose(-1, -2)
                 if self.crop_train and self.training:
@@ -324,6 +335,9 @@ class ATMHead(BaseDecodeHead):
             qs.append(qfm(multi_qs_))
             # aux_loss_sim.append(qs_)
             attn = sum(attns_)
+            attn_mask = (attn.sigmoid().flatten(2).unsqueeze(1).repeat(1, self.nhead, 1, 1) < self.attn_mask_thre).bool()
+            attn_mask = attn_mask.detach()
+            attn_mask[torch.where(attn_mask.sum(-1) == attn_mask.shape[-1])] = False
             maps_size.append(attn.size()[-2:])
             attns.append(attn)
         qs = torch.stack(qs, dim=0)
