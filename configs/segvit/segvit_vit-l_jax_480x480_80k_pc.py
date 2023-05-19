@@ -25,6 +25,9 @@ model = dict(
         num_heads=16,
         num_classes=60,
         use_stages=len(out_indices),
+        attn_mask_thre=0.4,
+        num_ps_layers=6,
+        compress_c=10,
         loss_decode=dict(
             type='ATMLoss', num_classes=60, dec_layers=len(out_indices), loss_weight=1.0),
     ),

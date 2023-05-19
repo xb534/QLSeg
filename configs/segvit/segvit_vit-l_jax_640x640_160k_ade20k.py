@@ -24,6 +24,9 @@ model = dict(
         embed_dims=in_channels // 2,
         num_heads=16,
         use_stages=len(out_indices),
+        attn_mask_thre=0.4,
+        num_ps_layers=6,
+        compress_c=10,
         loss_decode=dict(
             type='ATMLoss', num_classes=150, dec_layers=len(out_indices), loss_weight=1.0),
     ),
