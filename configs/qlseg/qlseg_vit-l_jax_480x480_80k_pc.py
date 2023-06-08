@@ -75,7 +75,7 @@ data = dict(
     test=dict(pipeline=test_pipeline))
 
 
-optimizer = dict(_delete_=True, type='AdamW', lr=0.00002, betas=(0.9, 0.999), weight_decay=0.03,
+optimizer = dict(_delete_=True, type='AdamW', lr=0.00001, betas=(0.9, 0.999), weight_decay=0.03,
                  paramwise_cfg=dict(custom_keys={'norm': dict(decay_mult=0.),
                                                  'ln': dict(decay_mult=0.),
                                                  'head': dict(lr_mult=10.),
