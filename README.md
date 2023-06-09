@@ -1,27 +1,28 @@
-
-# Multi-Query and Multi-Level Enhanced Network for Semantic Segmentation
-## Official Pytorch Implementation of QLSeg
-
-Bin Xie, Jiale Cao, Rao Muhammad Anwer, Jin Xie, Fahad Shahbaz Khan, Yanwei Pang.
-
-This repository contains the official Pytorch implementation of training & evaluation code and the pretrained models for QLSeg.
-
-
-<img src="resources/qlseg_arch.png">
-
+# Official Pytorch Implementation of QLSeg
+### Multi-Query and Multi-Level Enhanced Network for Semantic Segmentation
 
 ## Highlights
 * **Enhanced Decoder:**  A multi-query and multi-level enhanced network for semantic segmentation, which aims to exploit
 diverse information at different feature map levels in plain transformer backbone.
 * **Stronger performance:** We got state-of-the-art performance mIoU **56.2%** on ADE20K, mIoU **51.0%** on COCOStuff10K, and mIoU **60.2%** on PASCAL-Context datasets with the least amount of computational cost among counterparts using ViT backbone. 
 
+## Updates
+- `2023/06/09`: Code and models are released.
+
+## Segmentation Results
+<center><img src="resources/vis_ade20k.png" style="width: 70%; height: auto;"></center>
+<center>(a) Qualitative results on ADE20K</center>
+<center><img src="resources/vis_pc.png" style="width: 70%; height: auto;"></center>
+<center>(b) Qualitative results on PASCAL-Context</center>
+<center><img src="resources/vis_cc.png" style="width: 70%; height: auto;"></center>
+<center>(c) Qualitative results on COCO-stuff-10K</center>
 
 ## Getting started 
 
 1. Install the [mmsegmentation](https://github.com/open-mmlab/mmsegmentation) library and some required packages.
 
 ```bash
-pip install mmcv-full==1.4.4 mmsegmentation==0.24.0
+pip install mmcv-full==1.7.1 mmsegmentation==0.30.0
 pip install scipy timm
 ```
 ## Training
@@ -39,12 +40,11 @@ Please follow the instructions of [mmsegmentation](https://github.com/open-mmlab
 ## Results
 | Model backbone        | datasets               | mIoU | mIoU (ms) | ckpt |
 | ------------------ |------------------------|------|-----------|---
-Vit-Base | ADE20k                 | 52.9 | 53.6      |[model](https://cloudstor.aarnet.edu.au/plus/s/k0xOaxYmENt6f0z) 
-Vit-Large | ADE20k                 | 55.3 | 56.2      | [model](https://cloudstor.aarnet.edu.au/plus/s/sMDAzsMjq39bQBD) 
-Vit-Large | COCOStuff10K           | 50.5 | 51.0      | [model](https://cloudstor.aarnet.edu.au/plus/s/3XKspneTKPcI3sx)
-Vit-Large  | PASCAL-Context (59cls) | 65.5 | 66.4      | [model](https://cloudstor.aarnet.edu.au/plus/s/RGsAybjc5xLwpKK)
-Vit-Large  | PASCAL-Context (60cls) | 59.3 | 60.2      | [model](https://cloudstor.aarnet.edu.au/plus/s/RGsAybjc5xLwpKK)
-
+Vit-Base | ADE20k                 | 52.9 | 53.6      |[Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1-KjATwROIYVhYLg36Phd_n_-LsJXyg_N/view?usp=sharing) 
+Vit-Large | ADE20k                 | 55.3 | 56.2      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive]()
+Vit-Large | COCOStuff10K           | 50.5 | 51.0      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
+Vit-Large  | PASCAL-Context (59cls) | 65.5 | 66.4      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
+Vit-Large  | PASCAL-Context (60cls) | 59.3 | 60.2      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
 
 
 ## License
@@ -59,3 +59,6 @@ For academic use, this project is licensed under the 2-clause BSD License - see 
   year={2023}
 }
 ```
+
+## Acknowledgement
+Thanks to previous open-sourced repo: [SegViT](https://github.com/zbwxp/SegVit)
