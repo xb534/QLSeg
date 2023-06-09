@@ -4,7 +4,7 @@
 ## Highlights
 * **Enhanced Decoder:**  A multi-query and multi-level enhanced network for semantic segmentation, which aims to exploit
 diverse information at different feature map levels in plain transformer backbone.
-* **Stronger performance:** We got state-of-the-art performance mIoU **56.2%** on ADE20K, mIoU **51.0%** on COCOStuff10K, and mIoU **60.2%** on PASCAL-Context datasets with the least amount of computational cost among counterparts using ViT backbone. 
+* **Stronger performance:** We got state-of-the-art performance mIoU **56.2%** on ADE20K, mIoU **51.0%** on COCOStuff10K, and mIoU **60.2%** on PASCAL-Context datasets using ViT backbone. 
 
 ## Updates
 - `2023/06/09`: Code and models are released.
@@ -41,7 +41,7 @@ Please follow the instructions of [mmsegmentation](https://github.com/open-mmlab
 |    Model backbone    | datasets               |  mIoU  |  mIoU (ms)  | ckpt |
 |--------------------|------------------------|------|-----------|---
 Vit-Base       | ADE20k                 |  52.9  |    53.6     |[Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1-KjATwROIYVhYLg36Phd_n_-LsJXyg_N/view?usp=sharing) 
-Vit-Large       | ADE20k                 |  55.3  |    56.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive]()
+Vit-Large       | ADE20k                 |  55.3  |    56.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1WI8UdcuJyHOdLLq_Ylh7hUMifm8B_21F/view?usp=sharing)
 Vit-Large       | COCOStuff10K           |  50.5  |    51.0     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
 Vit-Large       | PASCAL-Context (59cls) |  65.5  |    66.4     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
 Vit-Large       | PASCAL-Context (60cls) |  59.3  |    60.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
