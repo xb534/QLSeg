@@ -39,7 +39,7 @@ Please follow the instructions of [mmsegmentation](https://github.com/open-mmlab
 
 ## Results
 |    Model backbone    | datasets               |  mIoU  |  mIoU (ms)  | ckpt |
-|:--------------------:|------------------------|:------:|:-----------:|---
+|--------------------|------------------------|------|-----------|---
        Vit-Base       | ADE20k                 |  52.9  |    53.6     |[Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1-KjATwROIYVhYLg36Phd_n_-LsJXyg_N/view?usp=sharing) 
       Vit-Large       | ADE20k                 |  55.3  |    56.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive]()
       Vit-Large       | COCOStuff10K           |  50.5  |    51.0     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
