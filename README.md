@@ -38,13 +38,13 @@ python tools/dist_test.sh configs/qlseg/qlseg_vit-l_jax_640x640_160k_ade20k.py  
 Please follow the instructions of [mmsegmentation](https://github.com/open-mmlab/mmsegmentation) data preparation
 
 ## Results
-| Model backbone        | datasets               | mIoU | mIoU (ms) | ckpt |
-| ------------------ |------------------------|------|-----------|---
-Vit-Base | ADE20k                 | 52.9 | 53.6      |[Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1-KjATwROIYVhYLg36Phd_n_-LsJXyg_N/view?usp=sharing) 
-Vit-Large | ADE20k                 | 55.3 | 56.2      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive]()
-Vit-Large | COCOStuff10K           | 50.5 | 51.0      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
-Vit-Large  | PASCAL-Context (59cls) | 65.5 | 66.4      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
-Vit-Large  | PASCAL-Context (60cls) | 59.3 | 60.2      | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
+|    Model backbone    | datasets               |  mIoU  |  mIoU (ms)  | ckpt |
+|:--------------------:|------------------------|:------:|:-----------:|---
+       Vit-Base       | ADE20k                 |  52.9  |    53.6     |[Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive](https://drive.google.com/file/d/1-KjATwROIYVhYLg36Phd_n_-LsJXyg_N/view?usp=sharing) 
+      Vit-Large       | ADE20k                 |  55.3  |    56.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl), [Google Drive]()
+      Vit-Large       | COCOStuff10K           |  50.5  |    51.0     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
+      Vit-Large       | PASCAL-Context (59cls) |  65.5  |    66.4     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
+      Vit-Large       | PASCAL-Context (60cls) |  59.3  |    60.2     | [Baidu Drive](https://pan.baidu.com/s/1IDYFNfko-UPwaAPRykRtlQ?pwd=u2jl)
 
 
 ## License
@@ -61,4 +61,4 @@ For academic use, this project is licensed under the 2-clause BSD License - see 
 ```
 
 ## Acknowledgement
-Thanks to previous open-sourced repo: [SegViT](https://github.com/zbwxp/SegVit)
+Thanks to previous open-sourced repo: [SegVit](https://github.com/zbwxp/SegVit).
