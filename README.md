@@ -54,8 +54,8 @@ For academic use, this project is licensed under the 2-clause BSD License - see 
 ```
 @article{xie2023qlseg,
   title={Multi-Query and Multi-Level Enhanced Network for Semantic Segmentation},
-  author={Bin Xie, Jiale Cao, Rao Muhammad Anwer, Jin Xie, Fahad Shahbaz Khan, Yanwei Pang},
-  journal={-},
+  author={Bin Xie, Jiale Cao, Rao Muhammad Anwer, Jin Xie, Jing Nie, Yanwei Pang},
+  journal={techical report},
   year={2023}
 }
 ```
