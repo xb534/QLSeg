@@ -1,13 +1,14 @@
 # Official Pytorch Implementation of QLSeg
 ### Multi-Query and Multi-Level Enhanced Network for Semantic Segmentation
 
+## :fire: Updates
+- `2024/07`: Our paper has been accepted by Pattern Recogintion(PR).
+- `2023/06`: Code and models are released.
+
 ## Highlights
 * **Enhanced Decoder:**  A multi-query and multi-level enhanced network for semantic segmentation, which aims to exploit
 diverse information at different feature map levels in plain transformer backbone.
 * **Stronger performance:** We got state-of-the-art performance mIoU **56.2%** on ADE20K, mIoU **51.0%** on COCOStuff10K, and mIoU **60.2%** on PASCAL-Context datasets using ViT backbone. 
-
-## Updates
-- `2023/06/09`: Code and models are released.
 
 ## Segmentation Results
 <center><img src="resources/vis_ade20k.png" style="width: 70%; height: auto;"></center>
@@ -27,11 +28,11 @@ pip install scipy timm
 ```
 ## Training
 ```
-python tools/dist_train.sh  configs/qlseg/qlseg_vit-l_jax_640x640_160k_ade20k.py 
+sh tools/dist_train.sh  configs/qlseg/qlseg_vit-l_jax_640x640_160k_ade20k.py 
 ```
 ## Evaluation
 ```
-python tools/dist_test.sh configs/qlseg/qlseg_vit-l_jax_640x640_160k_ade20k.py   {path_to_ckpt}
+sh tools/dist_test.sh configs/qlseg/qlseg_vit-l_jax_640x640_160k_ade20k.py   {path_to_ckpt}
 ```
 
 ## Datasets
@@ -52,11 +53,13 @@ For academic use, this project is licensed under the 2-clause BSD License - see 
 
 ## Citation
 ```
-@article{xie2023qlseg,
-  title={Multi-Query and Multi-Level Enhanced Network for Semantic Segmentation},
-  author={Xie, Bin and Cao, Jiale and Anwer, Rao Muhammad and Xie, Jin and Nie, Jing and Pang, Yanwei},
-  journal={Techical Report},
-  year={2023}
+@article{xie2024multi,
+  title={Multi-query and multi-level enhanced network for semantic segmentation},
+  author={Xie, Bin and Cao, Jiale and Anwer, Rao Muhammad and Xie, Jin and Nie, Jing and Yang, Aiping and Pang, Yanwei},
+  journal={Pattern Recognition},
+  pages={110777},
+  year={2024},
+  publisher={Elsevier}
 }
 ```
 
